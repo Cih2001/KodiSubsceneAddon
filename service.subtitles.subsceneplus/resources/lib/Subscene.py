@@ -1,5 +1,6 @@
 import requests
 import html5lib
+import re
 from html5lib import treebuilders, treewalkers
 
 DOMAIN_NAME = "https://www.subscene.com"
@@ -49,6 +50,9 @@ def SearchExactTitleMatch(stream):
             elif token.has_key('data'):
                 name = token['data']
                 results.append((name,href))
+        elif state == 99:
+            break
+
     return results
 
 def EnumSubtitles(url):
@@ -135,19 +139,20 @@ def EnumSubtitles(url):
             comment = ""
             if token.has_key('name') and token['name'] == "tr" and token['type'] == 'EndTag':
                 state = 1
-                result.append((href, lang, name, int(no_of_file), author, comment))
-        
-    for r in result:
-        print r
+                result.append((href, lang, name, int(no_of_file), hearing_imp, author, comment))
+        elif state == 99:
+            break
+
+    return result
     
 
+# TODO: refactor and change item with name, year
 def SearchMovie(item):
     # item['year']
     # item['title']
     # item['file_original_path']
     # item['3let_language']
     r = requests.post(DOMAIN_NAME + "/subtitles/searchbytitle", data={"query": item["title"], "l": ""})
-    # print(r.status_code, r.reason)
 
     p = html5lib.HTMLParser(tree=treebuilders.getTreeBuilder("dom"))
     dom_tree = p.parse(r.text)
@@ -159,15 +164,62 @@ def SearchMovie(item):
     if len(results) > 0:
         # [(u'Face Off (1997)', u'/subtitles/faceoff-face-off')]
         # TODO: Match for the exact option in case we have more than one match
-        
+        url = results[0][1]
+        for result in results:
+            m = re.match("^.*\(([0-9\s]*)\).*", result[0])
+            if item['year'].strip() == m.group(1).strip():
+               url = result[1] 
         # Time to list subtitles
-        EnumSubtitles( DOMAIN_NAME + results[0][1])
+        subtitles = EnumSubtitles(DOMAIN_NAME + url)
+        return subtitles
 
+    return None
 
-    return
+# subtitle_id = '/subtitles/joker-2019/english/2109631'
+# subtitle_name = 'Joker.2019.WEB-DL.x264-FGT'
+# subtitle_link = 'ID for the download'
+# web_pdb = <module 'web_pdb' from '/storage/.kodi/addons/script.module.web-pdb/libs/web_pdb/__init__.pyo'>
+def DownloadSubtitle(link):
+    r = requests.get(DOMAIN_NAME + link)
+    p = html5lib.HTMLParser(tree=treebuilders.getTreeBuilder("dom"))
+    dom_tree = p.parse(r.text)
+    walker = treewalkers.getTreeWalker("dom")
+    stream = walker(dom_tree)
+   
+    href = ""
+    state = 0
+    for token in stream:
+        if state == 0:
+            if token.has_key('name') and token['name'] == "div" and token['type'] == "StartTag":
+                if token.has_key('data') and len(token['data']) > 0 and token['data'].values()[0] == "download":
+                    state = 1
+        elif state == 1:
+            if token.has_key('name') and token['name'] == "a" and token['type'] == "StartTag":
+                if token.has_key('data') and len(token['data']) > 0:
+                    for k,v in token['data']:
+                        if v == "href":
+                            # grab href
+                            href = token['data'][(k,v)]
+                            state = 99
+
+            if token.has_key('name') and token['name'] == "div" and token['type'] == 'EndTag':
+                state = 99 
+        elif state == 99:
+            break
+   
+    if href == "":
+        return None
+
+    return requests.get(DOMAIN_NAME + href).content
+
 
 if __name__ == "__main__":
-    item = {
-        'title' : "face off"
-    }
-    SearchMovie(item)
+    # item = {
+    #     'title' : 'Joker',
+    #     'year' : '2019' 
+    # }
+    # subtitles = SearchMovie(item)
+    # for subtitle in subtitles:
+    #     print subtitle
+    DownloadSubtitle('/subtitles/joker-2019/english/2109631')
+    DownloadSubtitle('/subtitles/joker-2019/farsi_persian/2088995')
