@@ -15,5 +15,9 @@ msgstr ""
 #English
 
 msgctxt "#24000"
-msgid "Some Error Msg"
+msgid "Subtitle added successfully."
+msgstr ""
+
+msgctxt "#24001"
+msgid "Error adding the subtitle."
 msgstr ""

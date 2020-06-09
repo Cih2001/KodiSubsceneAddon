@@ -10,6 +10,7 @@ import xbmcgui
 import xbmcplugin
 import shutil
 import unicodedata
+import time
 from difflib import SequenceMatcher
 
 ADD_ON = xbmcaddon.Addon()
@@ -28,47 +29,60 @@ sys.path.append(RESOURCE)
 from Subscene import *
 
 subscene_languages = {
-	'Armenian':                 {'3let': 'arm', '2let': 'am'},
-	'Albanian':                 {'3let': 'alb', '2let': 'sq'},
-	'Arabic':                   {'3let': 'ara', '2let': 'ar'},
-	'Big 5 code':               {'3let': 'chi', '2let': 'zh'},
-	'Brazillian Portuguese':    {'3let': 'por', '2let': 'pb'},
-	'Bulgarian':                {'3let': 'bul', '2let': 'bg'},
-	'Chinese BG code':          {'3let': 'chi', '2let': 'zh'},
-	'Croatian':                 {'3let': 'hrv', '2let': 'hr'},
-	'Czech':                    {'3let': 'cze', '2let': 'cs'},
-	'Danish':                   {'3let': 'dan', '2let': 'da'},
-	'Dutch':                    {'3let': 'dut', '2let': 'nl'},
-	'English':                  {'3let': 'eng', '2let': 'en'},
-	'Estonian':                 {'3let': 'est', '2let': 'et'},
-	'Farsi/Persian':            {'3let': 'per', '2let': 'fa'},
-	'Finnish':                  {'3let': 'fin', '2let': 'fi'},
-	'French':                   {'3let': 'fre', '2let': 'fr'},
-	'German':                   {'3let': 'ger', '2let': 'de'},
-	'Greek':                    {'3let': 'gre', '2let': 'el'},
-	'Hebrew':                   {'3let': 'heb', '2let': 'he'},
-	'Hungarian':                {'3let': 'hun', '2let': 'hu'},
-	'Icelandic':                {'3let': 'ice', '2let': 'is'},
-	'Indonesian':               {'3let': 'ind', '2let': 'id'},
-	'Italian':                  {'3let': 'ita', '2let': 'it'},
-	'Japanese':                 {'3let': 'jpn', '2let': 'ja'},
-	'Korean':                   {'3let': 'kor', '2let': 'ko'},
-	'Lithuanian':               {'3let': 'lit', '2let': 'lt'},
-	'Malay':                    {'3let': 'may', '2let': 'ms'},
-	'Norwegian':                {'3let': 'nor', '2let': 'no'},
-	'Polish':                   {'3let': 'pol', '2let': 'pl'},
-	'Portuguese':               {'3let': 'por', '2let': 'pt'},
-	'Romanian':                 {'3let': 'rum', '2let': 'ro'},
-	'Russian':                  {'3let': 'rus', '2let': 'ru'},
-	'Serbian':                  {'3let': 'scc', '2let': 'sr'},
-	'Slovak':                   {'3let': 'slo', '2let': 'sk'},
-	'Slovenian':                {'3let': 'slv', '2let': 'sl'},
-	'Spanish':                  {'3let': 'spa', '2let': 'es'},
-	'Swedish':                  {'3let': 'swe', '2let': 'sv'},
-	'Thai':                     {'3let': 'tha', '2let': 'th'},
-	'Turkish':                  {'3let': 'tur', '2let': 'tr'},
-	'Vietnamese':               {'3let': 'vie', '2let': 'vi'}
+	'Armenian':					{'3let': 'arm', '2let': 'am'},
+	'Albanian':					{'3let': 'alb', '2let': 'sq'},
+	'Arabic':					{'3let': 'ara', '2let': 'ar'},
+	'Big 5 code':				{'3let': 'chi', '2let': 'zh'},
+	'Brazillian Portuguese':	{'3let': 'por', '2let': 'pb'},
+	'Bulgarian':				{'3let': 'bul', '2let': 'bg'},
+	'Chinese BG code':			{'3let': 'chi', '2let': 'zh'},
+	'Croatian':					{'3let': 'hrv', '2let': 'hr'},
+	'Czech':					{'3let': 'cze', '2let': 'cs'},
+	'Danish':					{'3let': 'dan', '2let': 'da'},
+	'Dutch':					{'3let': 'dut', '2let': 'nl'},
+	'English':					{'3let': 'eng', '2let': 'en'},
+	'Estonian':					{'3let': 'est', '2let': 'et'},
+	'Farsi/Persian':			{'3let': 'per', '2let': 'fa'},
+	'Finnish':					{'3let': 'fin', '2let': 'fi'},
+	'French':					{'3let': 'fre', '2let': 'fr'},
+	'German':					{'3let': 'ger', '2let': 'de'},
+	'Greek':					{'3let': 'gre', '2let': 'el'},
+	'Hebrew':					{'3let': 'heb', '2let': 'he'},
+	'Hungarian':				{'3let': 'hun', '2let': 'hu'},
+	'Icelandic':				{'3let': 'ice', '2let': 'is'},
+	'Indonesian':				{'3let': 'ind', '2let': 'id'},
+	'Italian':					{'3let': 'ita', '2let': 'it'},
+	'Japanese':					{'3let': 'jpn', '2let': 'ja'},
+	'Korean':					{'3let': 'kor', '2let': 'ko'},
+	'Lithuanian':				{'3let': 'lit', '2let': 'lt'},
+	'Malay':					{'3let': 'may', '2let': 'ms'},
+	'Norwegian':				{'3let': 'nor', '2let': 'no'},
+	'Polish':					{'3let': 'pol', '2let': 'pl'},
+	'Portuguese':				{'3let': 'por', '2let': 'pt'},
+	'Romanian':					{'3let': 'rum', '2let': 'ro'},
+	'Russian':					{'3let': 'rus', '2let': 'ru'},
+	'Serbian':					{'3let': 'scc', '2let': 'sr'},
+	'Slovak':					{'3let': 'slo', '2let': 'sk'},
+	'Slovenian':				{'3let': 'slv', '2let': 'sl'},
+	'Spanish':					{'3let': 'spa', '2let': 'es'},
+	'Swedish':					{'3let': 'swe', '2let': 'sv'},
+	'Thai':						{'3let': 'tha', '2let': 'th'},
+	'Turkish':					{'3let': 'tur', '2let': 'tr'},
+	'Vietnamese':				{'3let': 'vie', '2let': 'vi'}
 }
+
+start_time = time.time()
+
+def log(module, msg):
+	global start_time
+	xbmc.log((u"### [%s] %f - %s" % (module, time.time() - start_time, msg,)).encode('utf-8'), level=xbmc.LOGDEBUG)
+
+def _xmbc_localized_string_utf8(string_id):
+	return ADD_ON.getLocalizedString(string_id).encode('utf-8')
+
+def _xbmc_notification(string_id, heading=SCRIPT_NAME, icon=xbmcgui.NOTIFICATION_INFO):
+	message = _xmbc_localized_string_utf8(string_id)
+	xbmcgui.Dialog().notification(heading, message, icon)
 
 class Subtitle:
 	def __init__(self, href, lang, name, no_of_files, hearing_imp, author, comment):
@@ -150,7 +164,7 @@ def Search(item):
 			label = subtitle.lang,				# language name for the found subtitle
 			label2 = subtitle.name,				# file name for the found subtitle
 			iconImage = subtitle.rate(),		# rating for the subtitle, string 0-5
-			thumbnailImage = subtitle.lang_2let	# language flag, ISO_639_1 language
+			thumbnailImage = subtitle.lang_2let # language flag, ISO_639_1 language
 		)
 														
 		# indicates that sub is 100 Comaptible
@@ -172,37 +186,45 @@ def Search(item):
 
 
 def Download(subtitle_id, subtitle_link, subtitle_name):
-	# import web_pdb; web_pdb.set_trace()
-	content = DownloadSubtitle(subtitle_link)
+	log("Download", "Downloading subtitle: link %s, name: %s" % (subtitle_link, subtitle_name))
+	file_content = DownloadSubtitle(subtitle_link)
 	subtitle_list = []
-	if content is None:
+	if file_content is None:
 		return subtitle_list
 
 	## Cleanup temp dir, we recomend you download/unzip your subs in temp folder and
 	## pass that to XBMC to copy and activate
+	log("Download", "Removing temp dir %s" % (TEMP))
 	if xbmcvfs.exists(TEMP):
 		shutil.rmtree(TEMP)
 	xbmcvfs.mkdirs(TEMP)
 
 	tmp_file = os.path.join(TEMP, "subtitle.zip")
 	file_handle = xbmcvfs.File(tmp_file, "wb")
-	file_handle.write(content)
+	file_handle.write(file_content)
 	file_handle.close()
 	
 	# Extract subtitle.
-	xbmc.executebuiltin(('XBMC.Extract("%s","%s")' % (tmp_file, TEMP,)).encode('utf-8'), True)
+	xbmc.executebuiltin(('XBMC.Extract("%s","%s")' % (tmp_file, TEMP)).encode('utf-8'), True)
 
 	extentions = [".srt", ".sub", ".txt", ".smi", ".ssa", ".ass"]
 	for f in xbmcvfs.listdir(TEMP)[1]:
-		if os.path.splitext(f)[1] in extentions:
-			subtitle_list.append(os.path.join(TEMP, f))
+		if os.path.splitext(f)[1].lower() in extentions:
+			path = os.path.join(TEMP, f)
+			subtitle_list.append(path)
+
+	# import web_pdb; web_pdb.set_trace()
+	if len(subtitle_list) == 0:
+		_xbmc_notification(24001, xbmcgui.NOTIFICATION_WARNING)
+	else:
+		_xbmc_notification(24000)
 
 	return subtitle_list
  
 def normalizeString(string):
 	return unicodedata.normalize('NFKD', 
-            string.decode('utf-8')
-    ).encode('ascii','ignore')		 
+			string.decode('utf-8')
+	).encode('ascii','ignore')		 
  
 def get_params():
 	param=[]
@@ -230,15 +252,12 @@ def GetCurrentItem():
 	item['season'] = str(xbmc.getInfoLabel("VideoPlayer.Season"))									# Season
 	item['episode'] = str(xbmc.getInfoLabel("VideoPlayer.Episode"))									# Episode
 	item['tvshow'] = normalizeString(xbmc.getInfoLabel("VideoPlayer.TVshowtitle"))					# Show
-	item['title'] = normalizeString(xbmc.getInfoLabel("VideoPlayer.OriginalTitle"))					# try to get original title
+	item['title']  = normalizeString(xbmc.getInfoLabel("VideoPlayer.Title")) 
 	item['file_original_path'] = urllib.unquote(xbmc.Player().getPlayingFile().decode('utf-8'))		# Full path of a playing file
 	item['3let_language'] = []
 	
 	for lang in urllib.unquote(params['languages']).decode('utf-8').split(","):
 		item['3let_language'].append(xbmc.convertLanguage(lang,xbmc.ISO_639_2))
-	
-	if item['title'] == "":
-		item['title']  = normalizeString(xbmc.getInfoLabel("VideoPlayer.Title")) # no original title, get just Title
 		
 	if item['episode'].lower().find("s") > -1: # Check if season is "Special"
 		item['season'] = "0"
