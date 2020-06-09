@@ -18,10 +18,10 @@ SCRIPT_ID = ADD_ON.getAddonInfo('id')
 SCRIPT_NAME = ADD_ON.getAddonInfo('name').encode('utf-8')
 VERSION = ADD_ON.getAddonInfo('version')
 
-CWD = unicode(xbmc.translatePath(ADD_ON.getAddonInfo('path')), 'utf-8')
-PROFILE = unicode(xbmc.translatePath(ADD_ON.getAddonInfo('profile')), 'utf-8')
-RESOURCE = unicode(xbmc.translatePath(os.path.join(CWD, 'resources', 'lib')), 'utf-8')
-TEMP = unicode(xbmc.translatePath(os.path.join(PROFILE, 'temp', '')), 'utf-8')
+CWD = str(xbmc.translatePath(ADD_ON.getAddonInfo('path')), 'utf-8')
+PROFILE = str(xbmc.translatePath(ADD_ON.getAddonInfo('profile')), 'utf-8')
+RESOURCE = str(xbmc.translatePath(os.path.join(CWD, 'resources', 'lib')), 'utf-8')
+TEMP = str(xbmc.translatePath(os.path.join(PROFILE, 'temp', '')), 'utf-8')
 
 sys.path.append(RESOURCE)
 
@@ -139,7 +139,7 @@ def Search(item):
 				mapped_subs[subtitle.href] = subtitle
 	
 	uniq_subs = []
-	for v in mapped_subs.values():
+	for v in list(mapped_subs.values()):
 		uniq_subs.append(v)
 
 	# sort uniq_subs based on their score.
@@ -199,9 +199,9 @@ def Download(subtitle_id, subtitle_link, subtitle_name):
 
 	return subtitle_list
  
-def normalizeString(str):
+def normalizeString(string):
 	return unicodedata.normalize(
-				 'NFKD', unicode(unicode(str, 'utf-8'))
+				 'NFKD', str(str(string, 'utf-8'))
 				 ).encode('ascii','ignore')		 
  
 def get_params():

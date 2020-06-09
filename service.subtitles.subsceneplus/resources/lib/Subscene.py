@@ -4,28 +4,54 @@ import re
 from html5lib import treebuilders, treewalkers
 
 DOMAIN_NAME = "https://www.subscene.com"
+TYPE_MATCH_UNKNOWN = 0
+TYPE_MATCH_EXACT = 1
+TYPE_MATCH_CLOSE = 2
+TYPE_MATCH_POPULAR = 3
+TYPE_MATCH_TVSERIES = 4
 
-def Hello():
-    print "hello world"
+def SearchTitleMatch(stream):
 
-def SearchExactTitleMatch(stream):
-    results = []
+    results = {
+        TYPE_MATCH_UNKNOWN : [],
+        TYPE_MATCH_EXACT : [],
+        TYPE_MATCH_CLOSE : [],
+        TYPE_MATCH_POPULAR : [],
+        TYPE_MATCH_TVSERIES : [],
+    }
+
+    title_type = TYPE_MATCH_UNKNOWN
+
     state = 0
+    name = "" 
+    href = ""
+
     for token in stream:
         if state == 0:
             if token.has_key('data'):
                 if token['data'] == "Exact":
+                    title_type = TYPE_MATCH_EXACT
+                    state = 1
+                elif token['data'] == "Close":
+                    title_type = TYPE_MATCH_CLOSE
+                    state = 1
+                elif token['data'] == "Popular":
+                    title_type = TYPE_MATCH_POPULAR
+                    state = 1
+                elif token['data'] == "TV-Series":
+                    title_type = TYPE_MATCH_TVSERIES
                     state = 1
         elif state == 1:
             if token.has_key('name') and token['type'] == 'StartTag':
                 if token['name'] == 'h':
+                    # parsing error, this should not have happend.
                     state = 99
                 elif token['name'] == 'ul':
                     state = 2
         elif state == 2:
             if token.has_key('name'):
                 if token['name'] == "ul" and token['type'] == 'EndTag':
-                    state = 99
+                    state = 0
                 elif token['name'] == "li" and token['type'] == 'StartTag':
                     state = 3
         elif state == 3:
@@ -41,15 +67,19 @@ def SearchExactTitleMatch(stream):
                 elif token['name'] == "a" and token['type'] == 'StartTag':
                     for (k,v) in token['data']:
                         if v == "href":
+                            # grap href
                             href = token['data'][(k,v)]
+                            name = ""
                     state = 5
         elif state == 5:
             if token.has_key('name'):
                 if token['name'] == "a" and token['type'] == 'EndTag':
                     state = 4
+                    results[title_type].append((name,href))
             elif token.has_key('data'):
-                name = token['data']
-                results.append((name,href))
+                # grab name, here we append name, sometime we have newline in tags, which 
+                # results in parsing the name in multiple tokens
+                name += token['data']
         elif state == 99:
             break
 
@@ -153,25 +183,37 @@ def SearchMovie(item):
     # item['file_original_path']
     # item['3let_language']
     r = requests.post(DOMAIN_NAME + "/subtitles/searchbytitle", data={"query": item["title"], "l": ""})
-
     p = html5lib.HTMLParser(tree=treebuilders.getTreeBuilder("dom"))
     dom_tree = p.parse(r.text)
     walker = treewalkers.getTreeWalker("dom")
     stream = walker(dom_tree)
 
+    results = SearchTitleMatch(stream)
+
+    # TODO: We are currently ignoring tv-series, thats to be handled later.
+    
     # Match for exact title
-    results = SearchExactTitleMatch(stream)
-    if len(results) > 0:
-        # [(u'Face Off (1997)', u'/subtitles/faceoff-face-off')]
-        # TODO: Match for the exact option in case we have more than one match
-        url = results[0][1]
-        for result in results:
+    if len(results[TYPE_MATCH_EXACT]) > 0:
+        url = results[TYPE_MATCH_EXACT][0][1]
+        for result in results[TYPE_MATCH_EXACT]:
             m = re.match("^.*\(([0-9\s]*)\).*", result[0])
             if item['year'].strip() == m.group(1).strip():
                url = result[1] 
         # Time to list subtitles
         subtitles = EnumSubtitles(DOMAIN_NAME + url)
         return subtitles
+    
+    # No exact match, search for the most popular
+    if len(results[TYPE_MATCH_POPULAR]) > 0:
+        url = results[TYPE_MATCH_POPULAR][0][1]
+        for result in results[TYPE_MATCH_POPULAR]:
+            m = re.match("^.*\(([0-9\s]*)\).*", result[0])
+            if item['year'].strip() == m.group(1).strip():
+               url = result[1] 
+        # Time to list subtitles
+        subtitles = EnumSubtitles(DOMAIN_NAME + url)
+        return subtitles
+
 
     return None
 
@@ -215,11 +257,12 @@ def DownloadSubtitle(link):
 
 if __name__ == "__main__":
     # item = {
-    #     'title' : 'Joker',
-    #     'year' : '2019' 
+    #     'title' : 'Yojimbo',
+    #     'year' : '1961' 
     # }
     # subtitles = SearchMovie(item)
     # for subtitle in subtitles:
-    #     print subtitle
-    DownloadSubtitle('/subtitles/joker-2019/english/2109631')
-    DownloadSubtitle('/subtitles/joker-2019/farsi_persian/2088995')
+    #     print (subtitle)
+    # DownloadSubtitle('/subtitles/joker-2019/english/2109631')
+    # DownloadSubtitle('/subtitles/joker-2019/farsi_persian/2088995')
+    pass
