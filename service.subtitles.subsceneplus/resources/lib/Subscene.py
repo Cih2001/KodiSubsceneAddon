@@ -176,13 +176,8 @@ def EnumSubtitles(url):
     return result
     
 
-# TODO: refactor and change item with name, year
-def SearchMovie(item):
-    # item['year']
-    # item['title']
-    # item['file_original_path']
-    # item['3let_language']
-    r = requests.post(DOMAIN_NAME + "/subtitles/searchbytitle", data={"query": item["title"], "l": ""})
+def SearchMovie(title, year):
+    r = requests.post(DOMAIN_NAME + "/subtitles/searchbytitle", data={"query": title, "l": ""})
     p = html5lib.HTMLParser(tree=treebuilders.getTreeBuilder("dom"))
     dom_tree = p.parse(r.text)
     walker = treewalkers.getTreeWalker("dom")
@@ -197,7 +192,7 @@ def SearchMovie(item):
         url = results[TYPE_MATCH_EXACT][0][1]
         for result in results[TYPE_MATCH_EXACT]:
             m = re.match("^.*\(([0-9\s]*)\).*", result[0])
-            if item['year'].strip() == m.group(1).strip():
+            if year.strip() == m.group(1).strip():
                url = result[1] 
         # Time to list subtitles
         subtitles = EnumSubtitles(DOMAIN_NAME + url)
@@ -208,19 +203,15 @@ def SearchMovie(item):
         url = results[TYPE_MATCH_POPULAR][0][1]
         for result in results[TYPE_MATCH_POPULAR]:
             m = re.match("^.*\(([0-9\s]*)\).*", result[0])
-            if item['year'].strip() == m.group(1).strip():
+            if year.strip() == m.group(1).strip():
                url = result[1] 
         # Time to list subtitles
         subtitles = EnumSubtitles(DOMAIN_NAME + url)
         return subtitles
 
-
     return None
 
-# subtitle_id = '/subtitles/joker-2019/english/2109631'
-# subtitle_name = 'Joker.2019.WEB-DL.x264-FGT'
-# subtitle_link = 'ID for the download'
-# web_pdb = <module 'web_pdb' from '/storage/.kodi/addons/script.module.web-pdb/libs/web_pdb/__init__.pyo'>
+
 def DownloadSubtitle(link):
     r = requests.get(DOMAIN_NAME + link)
     p = html5lib.HTMLParser(tree=treebuilders.getTreeBuilder("dom"))

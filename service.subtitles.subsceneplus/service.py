@@ -126,7 +126,11 @@ class Subtitle:
 
 
 def Search(item):
-	allsubs = SearchMovie(item)
+	if item['manualsearch']:
+		allsubs = SearchMovie(item['manualsearchstring'], item['year'])
+	else:
+		allsubs = SearchMovie(item['title'], item['year'])
+
 	if allsubs is None:
 		return
 
@@ -246,14 +250,12 @@ def get_params():
 
 def GetCurrentItem():
 	item = {}
-	item['temp'] = False
-	item['rar'] = False
+	item['manualsearch'] = False
 	item['year'] = xbmc.getInfoLabel("VideoPlayer.Year")											# Year
 	item['season'] = str(xbmc.getInfoLabel("VideoPlayer.Season"))									# Season
 	item['episode'] = str(xbmc.getInfoLabel("VideoPlayer.Episode"))									# Episode
 	item['tvshow'] = normalizeString(xbmc.getInfoLabel("VideoPlayer.TVshowtitle"))					# Show
 	item['title']  = normalizeString(xbmc.getInfoLabel("VideoPlayer.Title")) 
-	item['file_original_path'] = urllib.unquote(xbmc.Player().getPlayingFile().decode('utf-8'))		# Full path of a playing file
 	item['3let_language'] = []
 	
 	for lang in urllib.unquote(params['languages']).decode('utf-8').split(","):
@@ -262,17 +264,8 @@ def GetCurrentItem():
 	if item['episode'].lower().find("s") > -1: # Check if season is "Special"
 		item['season'] = "0"
 		item['episode'] = item['episode'][-1:]
-	
-	if ( item['file_original_path'].find("http") > -1 ):
-		item['temp'] = True
 
-	elif ( item['file_original_path'].find("rar://") > -1 ):
-		item['rar']  = True
-		item['file_original_path'] = os.path.dirname(item['file_original_path'][6:])
-
-	elif ( item['file_original_path'].find("stack://") > -1 ):
-		stackPath = item['file_original_path'].split(" , ")
-		item['file_original_path'] = stackPath[0][8:]
+	item['file_original_path'] = urllib.unquote(xbmc.Player().getPlayingFile().decode('utf-8'))
 	
 	return item
 
@@ -280,8 +273,11 @@ def GetCurrentItem():
 # PLUGIN STARTS HERE
 params = get_params()
 
-if params['action'] == 'search':
+if params['action'] == 'search' or params['action'] == 'manualsearch':
 	item = GetCurrentItem() 
+	if 'searchstring' in params:
+		item['manualsearch'] = True
+		item['manualsearchstring'] = params['searchstring']
 	Search(item)	
 
 elif params['action'] == 'download':
