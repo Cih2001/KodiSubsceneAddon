@@ -18,10 +18,10 @@ SCRIPT_ID = ADD_ON.getAddonInfo('id')
 SCRIPT_NAME = ADD_ON.getAddonInfo('name').encode('utf-8')
 VERSION = ADD_ON.getAddonInfo('version')
 
-CWD = str(xbmc.translatePath(ADD_ON.getAddonInfo('path')), 'utf-8')
-PROFILE = str(xbmc.translatePath(ADD_ON.getAddonInfo('profile')), 'utf-8')
-RESOURCE = str(xbmc.translatePath(os.path.join(CWD, 'resources', 'lib')), 'utf-8')
-TEMP = str(xbmc.translatePath(os.path.join(PROFILE, 'temp', '')), 'utf-8')
+CWD = xbmc.translatePath(ADD_ON.getAddonInfo('path')).encode('utf-8')
+PROFILE = xbmc.translatePath(ADD_ON.getAddonInfo('profile')).encode('utf-8')
+RESOURCE = xbmc.translatePath(os.path.join(CWD, 'resources', 'lib')).encode('utf-8')
+TEMP = xbmc.translatePath(os.path.join(PROFILE, 'temp', '')).encode('utf-8')
 
 sys.path.append(RESOURCE)
 
@@ -200,9 +200,9 @@ def Download(subtitle_id, subtitle_link, subtitle_name):
 	return subtitle_list
  
 def normalizeString(string):
-	return unicodedata.normalize(
-				 'NFKD', str(str(string, 'utf-8'))
-				 ).encode('ascii','ignore')		 
+	return unicodedata.normalize('NFKD', 
+            string.decode('utf-8')
+    ).encode('ascii','ignore')		 
  
 def get_params():
 	param=[]
