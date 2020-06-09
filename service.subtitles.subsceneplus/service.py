@@ -219,9 +219,9 @@ def Download(subtitle_id, subtitle_link, subtitle_name):
 
 	# import web_pdb; web_pdb.set_trace()
 	if len(subtitle_list) == 0:
-		_xbmc_notification(24001, xbmcgui.NOTIFICATION_WARNING)
+		_xbmc_notification(32002, xbmcgui.NOTIFICATION_WARNING)
 	else:
-		_xbmc_notification(24000)
+		_xbmc_notification(32001)
 
 	return subtitle_list
  
