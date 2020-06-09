@@ -1,4 +1,4 @@
-service.subtitles.demo
-======================
+Subscene Plus Kodi addon
+========================
 
-service.subtitles.demo
+Subscene plus is a kodi addon intended to fasilitate downloading subtitles from subscene.com
