@@ -5,6 +5,7 @@
        provider-name="Cih2001">
   <requires>
     <import addon="xbmc.python" version="2.1.0"/>
+    <import addon="script.module.web-pdb"/>
     <import addon="script.module.requests"/>
     <import addon="script.module.html5lib"/>
   </requires>
