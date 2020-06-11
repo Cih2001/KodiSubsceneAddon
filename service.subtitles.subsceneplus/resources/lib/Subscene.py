@@ -242,8 +242,13 @@ def DownloadSubtitle(link):
    
     if href == "":
         return None
-
-    return requests.get(DOMAIN_NAME + href).content
+    
+    r = requests.get(DOMAIN_NAME + href)
+    d = r.headers['content-disposition']
+    fname = re.findall("filename=(.+)", d)
+    if len(fname) > 0:
+        return (fname[0], r.content)
+    return None
 
 
 if __name__ == "__main__":
@@ -255,5 +260,5 @@ if __name__ == "__main__":
     # for subtitle in subtitles:
     #     print (subtitle)
     # DownloadSubtitle('/subtitles/joker-2019/english/2109631')
-    # DownloadSubtitle('/subtitles/joker-2019/farsi_persian/2088995')
+    DownloadSubtitle('/subtitles/curse-of-the-golden-flower-man-cheng-jin-dai-huang-jin-jia/farsi_persian/446391')
     pass

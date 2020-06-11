@@ -191,9 +191,11 @@ def Search(item):
 
 def Download(subtitle_id, subtitle_link, subtitle_name):
     log("Download", "Downloading subtitle: link %s, name: %s" % (subtitle_link, subtitle_name))
-    file_content = DownloadSubtitle(subtitle_link)
+    sub_content = DownloadSubtitle(subtitle_link)
+
     subtitle_list = []
-    if file_content is None:
+    if sub_content is None:
+        _xbmc_notification(32002, xbmcgui.NOTIFICATION_WARNING)
         return subtitle_list
 
     ## Cleanup temp dir, we recomend you download/unzip your subs in temp folder and
@@ -203,13 +205,24 @@ def Download(subtitle_id, subtitle_link, subtitle_name):
         shutil.rmtree(TEMP)
     xbmcvfs.mkdirs(TEMP)
 
-    tmp_file = os.path.join(TEMP, "subtitle.zip")
+    tmp_file = os.path.join(TEMP, sub_content[0])
     file_handle = xbmcvfs.File(tmp_file, "wb")
-    file_handle.write(file_content)
+    file_handle.write(sub_content[1])
     file_handle.close()
     
     # Extract subtitle.
-    xbmc.executebuiltin(('XBMC.Extract("%s","%s")' % (tmp_file, TEMP)).encode('utf-8'), True)
+    if os.path.splitext(tmp_file)[1].lower() == ".rar":
+        urlpath = urllib.quote_plus(tmp_file)
+        (dirs, files) = xbmcvfs.listdir('archive://%s' % (urlpath))
+        # import web_pdb; web_pdb.set_trace()
+        for f in files:
+            src = 'archive://' + urlpath + '/' + f
+            dest = os.path.join(TEMP, f)
+            xbmcvfs.copy(src, dest)
+
+    else:
+        xbmc.executebuiltin(('XBMC.Extract("%s","%s")' % (tmp_file, TEMP)).encode('utf-8'), True)
+
 
     extentions = [".srt", ".sub", ".txt", ".smi", ".ssa", ".ass"]
     for f in xbmcvfs.listdir(TEMP)[1]:
@@ -217,7 +230,6 @@ def Download(subtitle_id, subtitle_link, subtitle_name):
             path = os.path.join(TEMP, f)
             subtitle_list.append(path)
 
-    # import web_pdb; web_pdb.set_trace()
     if len(subtitle_list) == 0:
         _xbmc_notification(32002, xbmcgui.NOTIFICATION_WARNING)
     else:
