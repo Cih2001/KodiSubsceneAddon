@@ -126,6 +126,7 @@ class Subtitle:
 
 
 def Search(item):
+    # import web_pdb; web_pdb.set_trace()
     if item['manualsearch']:
         allsubs = SearchMovie(item['manualsearchstring'], item['year'])
     else:
@@ -134,7 +135,6 @@ def Search(item):
     if allsubs is None:
         return
 
-    # import web_pdb; web_pdb.set_trace()
     
     # Filter subtitles based on their language
     filtered_subs = []

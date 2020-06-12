@@ -193,10 +193,10 @@ def SearchMovie(title, year):
         for result in results[TYPE_MATCH_EXACT]:
             m = re.match("^.*\(([0-9\s]*)\).*", result[0])
             if year.strip() == m.group(1).strip():
-               url = result[1] 
-        # Time to list subtitles
-        subtitles = EnumSubtitles(DOMAIN_NAME + url)
-        return subtitles
+                url = result[1]
+                # Time to list subtitles
+                subtitles = EnumSubtitles(DOMAIN_NAME + url)
+                return subtitles
     
     # No exact match, search for the most popular
     if len(results[TYPE_MATCH_POPULAR]) > 0:
@@ -204,10 +204,10 @@ def SearchMovie(title, year):
         for result in results[TYPE_MATCH_POPULAR]:
             m = re.match("^.*\(([0-9\s]*)\).*", result[0])
             if year.strip() == m.group(1).strip():
-               url = result[1] 
-        # Time to list subtitles
-        subtitles = EnumSubtitles(DOMAIN_NAME + url)
-        return subtitles
+                url = result[1] 
+                # Time to list subtitles
+                subtitles = EnumSubtitles(DOMAIN_NAME + url)
+                return subtitles
 
     return None
 
