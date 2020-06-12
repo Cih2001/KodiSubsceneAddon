@@ -9,7 +9,7 @@ How to setup:
 =============
 Clone the repo and store the contents of *service.subtitles.subsceneplus* in a zip file with the version number added to it.
 ```bash
-https://github.com/Cih2001/KodiSubsceneAddon.git
+git clone https://github.com/Cih2001/KodiSubsceneAddon.git
 cd KodiSubsceneAddon/
 VER=$(cat service.subtitles.subsceneplus/addon.xml | grep version | grep -v "<" | sed -r "s/.*\"(.*)\"/\1/g")
 zip -r service.subtitles.subsceneplus-$VER.zip service.subtitles.subsceneplus/
