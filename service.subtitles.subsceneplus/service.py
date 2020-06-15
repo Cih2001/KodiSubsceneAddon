@@ -12,21 +12,14 @@ import shutil
 import unicodedata
 import time
 from difflib import SequenceMatcher
+from resources.lib.Subscene import *
 
 ADD_ON = xbmcaddon.Addon()
-AUTHOR = ADD_ON.getAddonInfo('author')
 SCRIPT_ID = ADD_ON.getAddonInfo('id')
 SCRIPT_NAME = ADD_ON.getAddonInfo('name').encode('utf-8')
-VERSION = ADD_ON.getAddonInfo('version')
-
-CWD = xbmc.translatePath(ADD_ON.getAddonInfo('path')).encode('utf-8')
 PROFILE = xbmc.translatePath(ADD_ON.getAddonInfo('profile')).encode('utf-8')
-RESOURCE = xbmc.translatePath(os.path.join(CWD, 'resources', 'lib')).encode('utf-8')
 TEMP = xbmc.translatePath(os.path.join(PROFILE, 'temp', '')).encode('utf-8')
-
-sys.path.append(RESOURCE)
-
-from Subscene import *
+START_TIME = time.time()
 
 subscene_languages = {
     'Armenian':                 {'3let': 'arm', '2let': 'am'},
@@ -71,11 +64,9 @@ subscene_languages = {
     'Vietnamese':               {'3let': 'vie', '2let': 'vi'}
 }
 
-start_time = time.time()
-
 def log(module, msg):
     global start_time
-    xbmc.log((u"### [%s] %f - %s" % (module, time.time() - start_time, msg,)).encode('utf-8'), level=xbmc.LOGDEBUG)
+    xbmc.log((u"### [%s] %f - %s" % (module, time.time() - START_TIME, msg,)).encode('utf-8'), level=xbmc.LOGDEBUG)
 
 def _xmbc_localized_string_utf8(string_id):
     return ADD_ON.getLocalizedString(string_id).encode('utf-8')
@@ -97,7 +88,7 @@ class Subtitle:
                 self.lang_2let = subscene_languages[lang.strip()]['2let']
                 self.lang_3let = subscene_languages[lang.strip()]['3let']
             except:
-                # TODO: Log the language.
+                log("Language", "Error identifying language %s" % lang.strip())
                 pass
 
         self.name = name
@@ -167,9 +158,12 @@ def Search(item):
         listitem = xbmcgui.ListItem(
             label = subtitle.lang,              # language name for the found subtitle
             label2 = subtitle.name,             # file name for the found subtitle
-            iconImage = subtitle.rate(),        # rating for the subtitle, string 0-5
-            thumbnailImage = subtitle.lang_2let # language flag, ISO_639_1 language
         )
+
+        listitem.setArt({
+            'icon': subtitle.rate(),        # rating for the subtitle, string 0-5
+            'thumb': subtitle.lang_2let     # language flag, ISO_639_1 language
+        })
                                                         
         # indicates that sub is 100 Comaptible
         if subtitle.score == 1.0:
@@ -211,7 +205,7 @@ def Download(subtitle_id, subtitle_link, subtitle_name):
     file_handle.close()
     
     # Extract subtitle.
-    if os.path.splitext(tmp_file)[1].lower() == ".rar":
+    if os.path.splitext(tmp_file)[1].lower() in [".rar", ".zip"]:
         urlpath = urllib.quote_plus(tmp_file)
         (dirs, files) = xbmcvfs.listdir('archive://%s' % (urlpath))
         # import web_pdb; web_pdb.set_trace()
@@ -219,10 +213,6 @@ def Download(subtitle_id, subtitle_link, subtitle_name):
             src = 'archive://' + urlpath + '/' + f
             dest = os.path.join(TEMP, f)
             xbmcvfs.copy(src, dest)
-
-    else:
-        xbmc.executebuiltin(('XBMC.Extract("%s","%s")' % (tmp_file, TEMP)).encode('utf-8'), True)
-
 
     extentions = [".srt", ".sub", ".txt", ".smi", ".ssa", ".ass"]
     for f in xbmcvfs.listdir(TEMP)[1]:

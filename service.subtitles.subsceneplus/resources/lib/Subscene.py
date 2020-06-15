@@ -251,14 +251,3 @@ def DownloadSubtitle(link):
     return None
 
 
-if __name__ == "__main__":
-    # item = {
-    #     'title' : 'Yojimbo',
-    #     'year' : '1961' 
-    # }
-    # subtitles = SearchMovie(item)
-    # for subtitle in subtitles:
-    #     print (subtitle)
-    # DownloadSubtitle('/subtitles/joker-2019/english/2109631')
-    DownloadSubtitle('/subtitles/curse-of-the-golden-flower-man-cheng-jin-dai-huang-jin-jia/farsi_persian/446391')
-    pass
