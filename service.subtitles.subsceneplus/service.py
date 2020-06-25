@@ -11,6 +11,7 @@ import xbmcplugin
 import shutil
 import unicodedata
 import time
+import re
 from difflib import SequenceMatcher
 from resources.lib.Subscene import *
 
@@ -20,6 +21,7 @@ SCRIPT_NAME = ADD_ON.getAddonInfo('name').encode('utf-8')
 PROFILE = xbmc.translatePath(ADD_ON.getAddonInfo('profile')).encode('utf-8')
 TEMP = xbmc.translatePath(os.path.join(PROFILE, 'temp', '')).encode('utf-8')
 START_TIME = time.time()
+
 
 subscene_languages = {
     'Armenian':                 {'3let': 'arm', '2let': 'am'},
@@ -65,7 +67,7 @@ subscene_languages = {
 }
 
 def log(module, msg):
-    global start_time
+    global START_TIME
     xbmc.log((u"### [%s] %f - %s" % (module, time.time() - START_TIME, msg,)).encode('utf-8'), level=xbmc.LOGDEBUG)
 
 def _xmbc_localized_string_utf8(string_id):
@@ -117,11 +119,43 @@ class Subtitle:
 
 
 def Search(item):
-    # import web_pdb; web_pdb.set_trace()
     if item['manualsearch']:
-        allsubs = SearchMovie(item['manualsearchstring'], item['year'])
+        movies = SearchMovie(item['manualsearchstring'], item['year'])
     else:
-        allsubs = SearchMovie(item['title'], item['year'])
+        movies = SearchMovie(item['title'], item['year'])
+    year = item['year']
+    # import web_pdb; web_pdb.set_trace()
+
+    matches = []
+    # Match for exact title
+    if len(movies[TYPE_MATCH_EXACT]) > 0:
+        url = movies[TYPE_MATCH_EXACT][0][1]
+        for movie in movies[TYPE_MATCH_EXACT]:
+            m = re.match(r"^.*\(([0-9\s]*)\).*", movie[0])
+            if year.strip() == m.group(1).strip():
+                matches.append(movie)
+
+    if len(matches) == 0:
+        # No exact match, search for the most popular
+        if len(movies[TYPE_MATCH_POPULAR]) > 0:
+            url = movies[TYPE_MATCH_POPULAR][0][1]
+            for movie in movies[TYPE_MATCH_POPULAR]:
+                m = re.match(r"^.*\(([0-9\s]*)\).*", movie[0])
+                if year.strip() == m.group(1).strip():
+                    matches.append(movie)
+
+    if len(matches) == 0:
+        idx = -1
+    elif len(matches) == 1:
+        idx = 0
+    else:
+        idx = xbmcgui.Dialog().select("Select movie", [m[0] for m in matches])
+
+    if idx < 0:
+        return
+
+    url = matches[idx][1]
+    allsubs = EnumSubtitles(DOMAIN_NAME + url)
 
     if allsubs is None:
         return
