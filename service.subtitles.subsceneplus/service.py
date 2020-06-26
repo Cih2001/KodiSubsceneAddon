@@ -204,9 +204,10 @@ def Search(item):
         idx = 0
     else:
         if not tvshow:
-            idx = xbmcgui.Dialog().select("Select Movie", [m[0] for m in matches])
+            title = _xmbc_localized_string_utf8(32004)
         else:
-            idx = xbmcgui.Dialog().select("Select TV Show", [m[0] for m in matches])
+            title = _xmbc_localized_string_utf8(32005)
+        idx = xbmcgui.Dialog().select(title, [m[0] for m in matches])
 
     if idx < 0:
         return
@@ -378,7 +379,8 @@ elif params['action'] == 'download':
     if len(subs) == 1:
         sub = subs[0]
     elif len(subs) > 1:
-        idx = xbmcgui.Dialog().select("Select Subtitle File", [s.split("/")[-1] for s in subs])
+        title = _xmbc_localized_string_utf8(32003)
+        idx = xbmcgui.Dialog().select(title, [s.split("/")[-1] for s in subs])
         if idx >= 0:
             sub = subs[idx]
     if sub is not None:
