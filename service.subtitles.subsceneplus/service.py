@@ -265,18 +265,16 @@ def Search(item):
 
         # below arguments are optional, it can be used to pass any info needed in download function
         # anything after "action=download&" will be sent to addon once user clicks listed subtitle to downlaod
-        url = "plugin://%s/?action=download&link=%s&ID=%s&filename=%s" % (
+        url = "plugin://%s/?action=download&link=%s&lang=%s" % (
             SCRIPT_ID,
             subtitle.href,
-            "ID for the download",
-            subtitle.name
+            subtitle.lang_2let
         )
         # add it to list, this can be done as many times as needed for all subtitles found
         xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]),url=url,listitem=listitem,isFolder=False) 
 
 
-def Download(subtitle_id, subtitle_link, subtitle_name):
-    log("Download", "Downloading subtitle: link %s, name: %s" % (subtitle_link, subtitle_name))
+def Download(subtitle_link):
     sub_content = DownloadSubtitle(subtitle_link)
 
     subtitle_list = []
@@ -375,7 +373,7 @@ if params['action'] == 'search' or params['action'] == 'manualsearch':
 
 elif params['action'] == 'download':
     # we pickup all our arguments sent from def Search()
-    subs = Download(params["ID"],params["link"],params["filename"])
+    subs = Download(params["link"])
     sub = None
     if len(subs) == 1:
         sub = subs[0]
