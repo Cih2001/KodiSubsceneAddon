@@ -66,6 +66,25 @@ subscene_languages = {
     'Vietnamese':               {'3let': 'vie', '2let': 'vi'}
 }
 
+subscene_episode_numbers = {
+    '1' : ['First Season', 'First', 'first'],
+    '2' : ['Second Season', 'Second', 'second'],
+    '3' : ['Third Season', 'Third', 'third'],
+    '4' : ['Fourth Season', 'Fourth', 'fourth'],
+    '5' : ['Fifth Season', 'Fifth', 'fifth'],
+    '6' : ['Sixth Season', 'Sixth', 'sixth'],
+    '7' : ['Seventh Season', 'Seventh', 'seventh'],
+    '8' : ['Eighth Season', 'Eighth', 'eighth'],
+    '9' : ['Ninth Season', 'Ninth', 'ninth'],
+    '10' : ['Tenth Season', 'Tenth', 'tenth'],
+    '11' : ['Eleventh Season', 'Eleventh', 'eleventh'],
+    '12' : ['Twelfth Season', 'Twelfth', 'twelfth'],
+    '13' : ['Thirteenth Season', 'Thirteenth', 'thirteenth'],
+    '14' : ['Fourteenth Season', 'Fourteenth', 'fourteenth'],
+    '15' : ['Fifteenth Season', 'Fifteenth', 'fifteenth'],
+    '16' : ['Sixteenth Season', 'Sixteenth', 'sixteenth'],
+}
+
 def log(module, msg):
     global START_TIME
     xbmc.log((u"### [%s] %f - %s" % (module, time.time() - START_TIME, msg,)).encode('utf-8'), level=xbmc.LOGDEBUG)
@@ -100,8 +119,30 @@ class Subtitle:
         self.comment = comment
         self.score = 0
     
-    def compute_score(self, filename):
-        self.score = SequenceMatcher(None, filename, self.name).ratio()
+    def compute_score(self, item):
+        filename = item['file_original_path'].split("/")[-1]
+        score = SequenceMatcher(None, filename, self.name).ratio()
+
+        if not item['season']:
+            # This is a movie.
+            self.score = score
+        else:
+            # This is a tv show.
+            self.score = score * 0.4
+            season = int(item['season'])
+            episode = int(item['episode'])
+
+            # Try to find some marks to match season and episode.
+            marks = [
+                "Season%02dEpisode%02d" % (season, episode),
+                "S%02dE%02d" % (season, episode),
+                "%02dx%02d" % (season, episode)
+            ]
+
+            for mark in marks:
+                if mark in self.name:
+                    self.score += 0.6
+                    return
     
     def __lt__(self, other):
         return self.score > other.score
@@ -121,35 +162,51 @@ class Subtitle:
 def Search(item):
     if item['manualsearch']:
         movies = SearchMovie(item['manualsearchstring'], item['year'])
+    elif item['tvshow']:
+        tvshow = True
+        movies = SearchMovie(item['tvshow'], item['year'])
     else:
         movies = SearchMovie(item['title'], item['year'])
     year = item['year']
     # import web_pdb; web_pdb.set_trace()
 
     matches = []
-    # Match for exact title
-    if len(movies[TYPE_MATCH_EXACT]) > 0:
-        url = movies[TYPE_MATCH_EXACT][0][1]
-        for movie in movies[TYPE_MATCH_EXACT]:
-            m = re.match(r"^.*\(([0-9\s]*)\).*", movie[0])
-            if year.strip() == m.group(1).strip():
-                matches.append(movie)
 
-    if len(matches) == 0:
-        # No exact match, search for the most popular
-        if len(movies[TYPE_MATCH_POPULAR]) > 0:
-            url = movies[TYPE_MATCH_POPULAR][0][1]
-            for movie in movies[TYPE_MATCH_POPULAR]:
+    if not tvshow:
+        # Searching in movies
+        # Match for exact title
+        if len(movies[TYPE_MATCH_EXACT]) > 0:
+            for movie in movies[TYPE_MATCH_EXACT]:
                 m = re.match(r"^.*\(([0-9\s]*)\).*", movie[0])
                 if year.strip() == m.group(1).strip():
                     matches.append(movie)
+
+        if len(matches) == 0:
+            # No exact match, search for the most popular
+            if len(movies[TYPE_MATCH_POPULAR]) > 0:
+                for movie in movies[TYPE_MATCH_POPULAR]:
+                    m = re.match(r"^.*\(([0-9\s]*)\).*", movie[0])
+                    if year.strip() == m.group(1).strip():
+                        matches.append(movie)
+    else:
+        # Searching tvshows
+        if len(movies[TYPE_MATCH_TVSERIES]) > 0:
+            for movie in movies[TYPE_MATCH_TVSERIES]:
+                if subscene_episode_numbers[item['season']][0] in movie[0]:
+                    matches.insert(0, movie)
+                else:
+                    matches.append(movie)
+
 
     if len(matches) == 0:
         idx = -1
     elif len(matches) == 1:
         idx = 0
     else:
-        idx = xbmcgui.Dialog().select("Select movie", [m[0] for m in matches])
+        if not tvshow:
+            idx = xbmcgui.Dialog().select("Select Movie", [m[0] for m in matches])
+        else:
+            idx = xbmcgui.Dialog().select("Select TV Show", [m[0] for m in matches])
 
     if idx < 0:
         return
@@ -160,15 +217,16 @@ def Search(item):
     if allsubs is None:
         return
 
-    
     # Filter subtitles based on their language
     filtered_subs = []
     for s in allsubs:
         subtitle = Subtitle(s[0], s[1], s[2], s[3], s[4], s[5], s[6])
+
         if subtitle.lang_3let not in item['3let_language']:
             continue
-        subtitle.compute_score(item['file_original_path'].split("/")[-1])
+        subtitle.compute_score(item)
         filtered_subs.append(subtitle)
+
     
     # time to remove duplicates 
     mapped_subs = {}
@@ -190,13 +248,13 @@ def Search(item):
             
     for subtitle in uniq_subs:
         listitem = xbmcgui.ListItem(
-            label = subtitle.lang,              # language name for the found subtitle
-            label2 = subtitle.name,             # file name for the found subtitle
+            label = subtitle.lang,  # language name for the found subtitle
+            label2 = subtitle.name, # file name for the found subtitle
         )
 
         listitem.setArt({
-            'icon': subtitle.rate(),        # rating for the subtitle, string 0-5
-            'thumb': subtitle.lang_2let     # language flag, ISO_639_1 language
+            'icon': subtitle.rate(),    # rating for the subtitle, string 0-5
+            'thumb': subtitle.lang_2let # language flag, ISO_639_1 language
         })
                                                         
         # indicates that sub is 100 Comaptible
@@ -205,15 +263,15 @@ def Search(item):
 
         listitem.setProperty( "hearing_imp", '{0}'.format(subtitle.hearing_imp).lower() ) # set to "true" if subtitle is for hearing impared
 
-        ## below arguments are optional, it can be used to pass any info needed in download function
-        ## anything after "action=download&" will be sent to addon once user clicks listed subtitle to downlaod
+        # below arguments are optional, it can be used to pass any info needed in download function
+        # anything after "action=download&" will be sent to addon once user clicks listed subtitle to downlaod
         url = "plugin://%s/?action=download&link=%s&ID=%s&filename=%s" % (
             SCRIPT_ID,
             subtitle.href,
             "ID for the download",
             subtitle.name
         )
-        ## add it to list, this can be done as many times as needed for all subtitles found
+        # add it to list, this can be done as many times as needed for all subtitles found
         xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]),url=url,listitem=listitem,isFolder=False) 
 
 
@@ -226,8 +284,8 @@ def Download(subtitle_id, subtitle_link, subtitle_name):
         _xbmc_notification(32002, xbmcgui.NOTIFICATION_WARNING)
         return subtitle_list
 
-    ## Cleanup temp dir, we recomend you download/unzip your subs in temp folder and
-    ## pass that to XBMC to copy and activate
+    # Cleanup temp dir, we recomend you download/unzip your subs in temp folder and
+    # pass that to XBMC to copy and activate
     log("Download", "Removing temp dir %s" % (TEMP))
     if xbmcvfs.exists(TEMP):
         shutil.rmtree(TEMP)
@@ -241,8 +299,7 @@ def Download(subtitle_id, subtitle_link, subtitle_name):
     # Extract subtitle.
     if os.path.splitext(tmp_file)[1].lower() in [".rar", ".zip"]:
         urlpath = urllib.quote_plus(tmp_file)
-        (dirs, files) = xbmcvfs.listdir('archive://%s' % (urlpath))
-        # import web_pdb; web_pdb.set_trace()
+        _, files = xbmcvfs.listdir('archive://%s' % (urlpath))
         for f in files:
             src = 'archive://' + urlpath + '/' + f
             dest = os.path.join(TEMP, f)
@@ -287,11 +344,11 @@ def get_params():
 def GetCurrentItem():
     item = {}
     item['manualsearch'] = False
-    item['year'] = xbmc.getInfoLabel("VideoPlayer.Year")                                            # Year
-    item['season'] = str(xbmc.getInfoLabel("VideoPlayer.Season"))                                   # Season
-    item['episode'] = str(xbmc.getInfoLabel("VideoPlayer.Episode"))                                 # Episode
-    item['tvshow'] = normalizeString(xbmc.getInfoLabel("VideoPlayer.TVshowtitle"))                  # Show
-    item['title']  = normalizeString(xbmc.getInfoLabel("VideoPlayer.Title")) 
+    item['year'] = xbmc.getInfoLabel("VideoPlayer.Year")                            # Year
+    item['season'] = str(xbmc.getInfoLabel("VideoPlayer.Season"))                   # Season
+    item['episode'] = str(xbmc.getInfoLabel("VideoPlayer.Episode"))                 # Episode
+    item['tvshow'] = normalizeString(xbmc.getInfoLabel("VideoPlayer.TVshowtitle"))  # Show
+    item['title']  = normalizeString(xbmc.getInfoLabel("VideoPlayer.Title"))        # Title 
     item['3let_language'] = []
     
     for lang in urllib.unquote(params['languages']).decode('utf-8').split(","):
@@ -317,12 +374,16 @@ if params['action'] == 'search' or params['action'] == 'manualsearch':
     Search(item)    
 
 elif params['action'] == 'download':
-    ## we pickup all our arguments sent from def Search()
+    # we pickup all our arguments sent from def Search()
     subs = Download(params["ID"],params["link"],params["filename"])
-    ## we can return more than one subtitle for multi CD versions, for now we are still working out how to handle that in XBMC core
-    for sub in subs:
+    sub = None
+    if len(subs) == 1:
+        sub = subs[0]
+    elif len(subs) > 1:
+        idx = xbmcgui.Dialog().select("Select Subtitle File", [s.split("/")[-1] for s in subs])
+        if idx >= 0:
+            sub = subs[idx]
+    if sub is not None:
         listitem = xbmcgui.ListItem(label=sub)
         xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]),url=sub,listitem=listitem,isFolder=False)
-    
-    
-xbmcplugin.endOfDirectory(int(sys.argv[1])) ## send end of directory to XBMC
+        xbmcplugin.endOfDirectory(int(sys.argv[1])) ## send end of directory to XBMC
