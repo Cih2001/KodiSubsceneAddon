@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <addon id="service.subtitles.subsceneplus"
        name="Subscene Subtitles"
-       version="1.1.22"
+       version="1.1.23"
        provider-name="Cih2001">
   <requires>
-    <import addon="xbmc.python" version="2.26.0"/>
-    <import addon="script.module.requests" version="2.22.0"/>
-    <import addon="script.module.html5lib" version="0.999.0"/>
-    <import addon="vfs.libarchive" version="1.0.0"/>
+    <import addon="xbmc.python" version="3.0.0" allowed-versions="3.0.0"/>
+    <import addon="script.module.requests" version="2.22.0.1"/>
+    <import addon="script.module.html5lib" version="1.0.1+matrix.2"/>
+    <import addon="vfs.libarchive" version="2.0.0"/> 
   </requires>
   <extension point="xbmc.subtitle.module"
              library="service.py" />
