@@ -10,6 +10,7 @@ import xbmcgui
 import xbmcplugin
 import shutil
 import unicodedata
+import urllib.parse
 import time
 import re
 from difflib import SequenceMatcher
@@ -19,7 +20,8 @@ ADD_ON = xbmcaddon.Addon()
 SCRIPT_ID = ADD_ON.getAddonInfo('id')
 SCRIPT_NAME = ADD_ON.getAddonInfo('name').encode('utf-8')
 PROFILE = xbmc.translatePath(ADD_ON.getAddonInfo('profile')).encode('utf-8')
-TEMP = xbmc.translatePath(os.path.join(PROFILE, 'temp', '')).encode('utf-8')
+#TEMP = xbmc.translatePath(os.path.join(PROFILE, 'temp', '')).encode('utf-8')
+TEMP = xbmc.translatePath(PROFILE)
 START_TIME = time.time()
 
 
@@ -87,7 +89,7 @@ subscene_episode_numbers = {
 
 def log(module, msg):
     global START_TIME
-    xbmc.log((u"### [%s] %f - %s" % (module, time.time() - START_TIME, msg,)).encode('utf-8'), level=xbmc.LOGDEBUG)
+    xbmc.log((u"### [%s] %f - %s" % (module, time.time() - START_TIME, msg,)), level=xbmc.LOGDEBUG)
 
 def _xmbc_localized_string_utf8(string_id):
     return ADD_ON.getLocalizedString(string_id).encode('utf-8')
@@ -298,7 +300,7 @@ def Download(subtitle_link):
     
     # Extract subtitle.
     if os.path.splitext(tmp_file)[1].lower() in [".rar", ".zip"]:
-        urlpath = urllib.quote_plus(tmp_file)
+        urlpath = urllib.parse.quote_plus(tmp_file)
         _, files = xbmcvfs.listdir('archive://%s' % (urlpath))
         for f in files:
             src = 'archive://' + urlpath + '/' + f
@@ -320,7 +322,7 @@ def Download(subtitle_link):
  
 def normalizeString(string):
     return unicodedata.normalize('NFKD', 
-            string.decode('utf-8')
+            string
     ).encode('ascii','ignore')       
  
 def get_params():
@@ -351,14 +353,14 @@ def GetCurrentItem():
     item['title']  = normalizeString(xbmc.getInfoLabel("VideoPlayer.Title"))        # Title 
     item['3let_language'] = []
     
-    for lang in urllib.unquote(params['languages']).decode('utf-8').split(","):
+    for lang in urllib.parse.unquote(params['languages']).split(","):
         item['3let_language'].append(xbmc.convertLanguage(lang,xbmc.ISO_639_2))
         
     if item['episode'].lower().find("s") > -1: # Check if season is "Special"
         item['season'] = "0"
         item['episode'] = item['episode'][-1:]
 
-    item['file_original_path'] = urllib.unquote(xbmc.Player().getPlayingFile().decode('utf-8'))
+    item['file_original_path'] = urllib.parse.unquote(xbmc.Player().getPlayingFile())
     
     return item
 
