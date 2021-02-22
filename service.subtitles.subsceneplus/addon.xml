@@ -1,16 +1,15 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <addon id="service.subtitles.subsceneplus"
        name="Subscene Subtitles"
-       version="1.1.23"
+       version="1.1.26"
        provider-name="Cih2001">
   <requires>
     <import addon="xbmc.python" version="3.0.0" allowed-versions="3.0.0"/>
-    <import addon="script.module.requests" version="2.22.0.1"/>
+    <import addon="script.module.requests" version="2.22.0+matrix.1"/>
     <import addon="script.module.html5lib" version="1.0.1+matrix.2"/>
     <import addon="vfs.libarchive" version="2.0.0"/> 
   </requires>
-  <extension point="xbmc.subtitle.module"
-             library="service.py" />
+  <extension point="xbmc.subtitle.module" library="service.py"/>
   <extension point="xbmc.addon.metadata">
     <summary lang="en_GB">Subscene.com Subtitles</summary>
     <description lang="en_GB"> A convenient addon to download subtitles from subscene.com. If you find it useful, please consider giving it a star in github. This is being actively maintained. In case of any problem, feel free to open an issue on github.
