@@ -18,9 +18,8 @@ from resources.lib.Subscene import *
 
 ADD_ON = xbmcaddon.Addon()
 SCRIPT_ID = ADD_ON.getAddonInfo('id')
-SCRIPT_NAME = ADD_ON.getAddonInfo('name').encode('utf-8')
-PROFILE = xbmc.translatePath(ADD_ON.getAddonInfo('profile')).encode('utf-8')
-#TEMP = xbmc.translatePath(os.path.join(PROFILE, 'temp', '')).encode('utf-8')
+SCRIPT_NAME = ADD_ON.getAddonInfo('name')
+PROFILE = xbmc.translatePath(ADD_ON.getAddonInfo('profile'))
 TEMP = xbmc.translatePath(PROFILE)
 START_TIME = time.time()
 DOMAIN_NAME = ADD_ON.getSetting("SDomain")
@@ -93,7 +92,7 @@ def log(module, msg):
     xbmc.log((u"### [%s] %f - %s" % (module, time.time() - START_TIME, msg,)), level=xbmc.LOGDEBUG)
 
 def _xmbc_localized_string_utf8(string_id):
-    return ADD_ON.getLocalizedString(string_id).encode('utf-8')
+    return ADD_ON.getLocalizedString(string_id)
 
 def _xbmc_notification(string_id, heading=SCRIPT_NAME, icon=xbmcgui.NOTIFICATION_INFO):
     message = _xmbc_localized_string_utf8(string_id)
@@ -324,9 +323,7 @@ def Download(subtitle_link):
     return subtitle_list
  
 def normalizeString(string):
-    return unicodedata.normalize('NFKD', 
-            string
-    ).encode('ascii','ignore')       
+    return unicodedata.normalize('NFKD', string).encode('ascii','ignore')       
  
 def get_params():
     param=[]
