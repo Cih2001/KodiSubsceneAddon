@@ -23,6 +23,7 @@ PROFILE = xbmc.translatePath(ADD_ON.getAddonInfo('profile')).encode('utf-8')
 #TEMP = xbmc.translatePath(os.path.join(PROFILE, 'temp', '')).encode('utf-8')
 TEMP = xbmc.translatePath(PROFILE)
 START_TIME = time.time()
+DOMAIN_NAME = ADD_ON.getSetting("SDomain")
 
 
 subscene_languages = {
@@ -163,13 +164,14 @@ class Subtitle:
 
 def Search(item):
     tvshow = False
+    service = SubsceneSubtitleService(DOMAIN_NAME)
     if item['manualsearch']:
-        movies = SearchMovie(item['manualsearchstring'], item['year'])
+        movies = service.SearchMovie(item['manualsearchstring'], item['year'])
     elif item['tvshow']:
         tvshow = True
-        movies = SearchMovie(item['tvshow'], item['year'])
+        movies = service.SearchMovie(item['tvshow'], item['year'])
     else:
-        movies = SearchMovie(item['title'], item['year'])
+        movies = service.SearchMovie(item['title'], item['year'])
     year = item['year']
     # import web_pdb; web_pdb.set_trace()
 
@@ -216,7 +218,7 @@ def Search(item):
         return
 
     url = matches[idx][1]
-    allsubs = EnumSubtitles(DOMAIN_NAME + url)
+    allsubs = service.EnumSubtitles(DOMAIN_NAME + url)
 
     if allsubs is None:
         return
@@ -279,7 +281,8 @@ def Search(item):
 
 
 def Download(subtitle_link):
-    sub_content = DownloadSubtitle(subtitle_link)
+    service = SubsceneSubtitleService(DOMAIN_NAME)
+    sub_content = service.DownloadSubtitle(subtitle_link)
 
     subtitle_list = []
     if sub_content is None:
